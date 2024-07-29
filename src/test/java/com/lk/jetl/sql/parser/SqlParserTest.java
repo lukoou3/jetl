@@ -23,6 +23,34 @@ import java.util.List;
 public class SqlParserTest {
 
     @Test
+    public void testWhere() throws Exception {
+        String sql = "select name, age, substr(name, 1, 4) name2 from table t where age > 1 and cate = '' and cate2 > '' and cate3 is not null";
+        Statement statement = CCJSqlParserUtil.parse(sql);
+        System.out.println(statement);
+        PlainSelect selectBody = ((PlainSelect) statement);
+        List<SelectItem<?>> selectItems = selectBody.getSelectItems();
+        for (SelectItem<?> selectItem : selectItems) {
+            System.out.println(selectItem + ":" + selectItem.getExpression().getClass().getSimpleName());
+        }
+        net.sf.jsqlparser.expression.Expression where = selectBody.getWhere();
+        System.out.println(where.getClass());
+        System.out.println(where);
+        where = CCJSqlParserUtil.parseExpression("name is null and age in (1, 2, 3)");
+        System.out.println(where.getClass());
+        System.out.println(where);
+
+        where = CCJSqlParserUtil.parseExpression("name like 'aaa%'");
+        System.out.println(where.getClass());
+        where = CCJSqlParserUtil.parseExpression("name not like 'aaa%'");
+        System.out.println(where);
+
+        where = CCJSqlParserUtil.parseExpression("name regexp '[0-9]+'");
+        System.out.println(where.getClass());
+        where = CCJSqlParserUtil.parseExpression("name not like 'aaa%'");
+        System.out.println(where);
+    }
+
+    @Test
     public void testSelectItem() throws Exception {
         String sql = "select s.a.z z1, s.z z, `s.z` z2, s['z'] z3,t.*,*,t.name, age, substr(name, 1, 4) name2, age + 1 age2, age * 2 age3, age - 2 age4, cast(a as int2) a, int(a) b, 1 c, -2 d from table t";
         Statement statement = CCJSqlParserUtil.parse(sql);
