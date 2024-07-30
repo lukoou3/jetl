@@ -3,13 +3,18 @@ package com.lk.jetl.sql.parser;
 import com.lk.jetl.sql.expressions.*;
 import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.expressions.arithmetic.*;
+import com.lk.jetl.sql.expressions.nvl.IsNotNull;
+import com.lk.jetl.sql.expressions.nvl.IsNull;
+import com.lk.jetl.sql.expressions.predicate.*;
 import com.lk.jetl.sql.expressions.predicate.GreaterThan;
+import com.lk.jetl.sql.expressions.string.Like;
+import com.lk.jetl.sql.expressions.string.RLike;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
-import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
@@ -48,6 +53,13 @@ public class SqlParserTest {
         System.out.println(where.getClass());
         where = CCJSqlParserUtil.parseExpression("name not like 'aaa%'");
         System.out.println(where);
+
+        where = CCJSqlParserUtil.parseExpression("case col when 1 then 'a' when 2 then 'b' else 'c' end");
+        System.out.println(where.getClass());
+        where = CCJSqlParserUtil.parseExpression("case when col = 1 then 'a' when col = 2 then 'b' else 'c' end");
+        System.out.println(where);
+        where = CCJSqlParserUtil.parseExpression("case when col = 1 then 'a' when col = 2 then 'b' end");
+        System.out.println(where);
     }
 
     @Test
@@ -76,6 +88,25 @@ public class SqlParserTest {
             System.out.println(expressions[i]);
         }
 
+    }
+
+    @Test
+    public void testWhereToExpression() throws Exception {
+        String[] strs = new String[]{
+//                "age > 1 and age < 4 and age <= 1 and cate = '' and cate = null",
+//                "cate2 is null and cate3 is not null and not a",
+//                "name1 like 'aaa%' or name2 not like 'aaa%'",
+//                "name1 regexp '[0-9]+' and name1 not regexp '[0-9]a'",
+//                "age between 1 and 10",
+                "case col when 1 then 'a' when 2 then 'b' else 'c' end",
+                "case when col = 1 then 'a' when col = 2 then 'b' else 'c' end",
+        };
+        net.sf.jsqlparser.expression.Expression[] exps = new net.sf.jsqlparser.expression.Expression[strs.length];
+        Expression[] expressions = new Expression[strs.length];
+        for (int i = 0; i < strs.length; i++) {
+            exps[i] = CCJSqlParserUtil.parseExpression(strs[i]);
+            System.out.println(exps[i] + ":" + exps[i].getClass().getSimpleName());
+        }
     }
 
     public Expression jsqlExprToExpression(net.sf.jsqlparser.expression.Expression expr) {
@@ -110,12 +141,52 @@ public class SqlParserTest {
                 return new Divide(left, right);
             } else if (binary instanceof Modulo) {
                 return new Remainder(left, right);
-            }  else if (binary instanceof net.sf.jsqlparser.expression.operators.relational.GreaterThan) {
+            } else if (binary instanceof net.sf.jsqlparser.expression.operators.relational.GreaterThan) {
                 return new GreaterThan(left, right);
+            } else if (binary instanceof net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals) {
+                return new GreaterThanOrEqual(left, right);
+            } else if (binary instanceof MinorThan) {
+                return new LessThan(left, right);
+            } else if (binary instanceof MinorThanEquals) {
+                return new LessThanOrEqual(left, right);
+            } else if (binary instanceof LikeExpression) {
+                LikeExpression like = ((LikeExpression) expr);
+                Expression e;
+                switch (like.getLikeKeyWord()){
+                    case LIKE:
+                        e = new Like(left, right);
+                        break;
+                    case RLIKE:
+                    case REGEXP:
+                        e = new RLike(left, right);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException(expr.toString());
+                }
+                return like.isNot()? new Not(e): e;
             } else {
                 throw new UnsupportedOperationException(binary.getClass().getSimpleName());
             }
-        }else if (expr instanceof LongValue) {
+        } else if (expr instanceof IsNullExpression) {
+            IsNullExpression isNull = ((IsNullExpression) expr);
+            Expression child = jsqlExprToExpression(isNull.getLeftExpression());
+            return isNull.isNot()? new IsNotNull(child): new IsNull(child);
+        } else if (expr instanceof NotExpression) {
+            NotExpression not = ((NotExpression) expr);
+            Expression child = jsqlExprToExpression(not.getExpression());
+            return new Not(child);
+        } else if (expr instanceof Between) {
+            Between between = ((Between) expr);
+            Expression value = jsqlExprToExpression(between.getLeftExpression());
+            Expression start = jsqlExprToExpression(between.getBetweenExpressionStart());
+            Expression end = jsqlExprToExpression(between.getBetweenExpressionEnd());
+            Expression e = new And(new GreaterThanOrEqual(value, start), new LessThanOrEqual(value, end));
+            return between.isNot()? new Not(e): e;
+        } else if (expr instanceof CaseExpression) {
+            CaseExpression c = ((CaseExpression) expr);
+
+            return null;
+        } else if (expr instanceof LongValue) {
             long longVal = ((LongValue) expr).getValue();
             if (longVal <= Integer.MAX_VALUE && longVal >= Integer.MIN_VALUE) {
                 return new Literal((int) longVal, Types.INT);
@@ -132,4 +203,5 @@ public class SqlParserTest {
 
         throw new UnsupportedOperationException(expr.getClass().getSimpleName());
     }
+
 }
