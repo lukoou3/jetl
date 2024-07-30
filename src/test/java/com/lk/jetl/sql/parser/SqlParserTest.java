@@ -3,6 +3,7 @@ package com.lk.jetl.sql.parser;
 import com.lk.jetl.sql.expressions.*;
 import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.expressions.arithmetic.*;
+import com.lk.jetl.sql.expressions.conditional.CaseWhen;
 import com.lk.jetl.sql.expressions.nvl.IsNotNull;
 import com.lk.jetl.sql.expressions.nvl.IsNull;
 import com.lk.jetl.sql.expressions.predicate.*;
@@ -14,6 +15,8 @@ import com.lk.jetl.sql.types.Types;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
@@ -93,11 +96,11 @@ public class SqlParserTest {
     @Test
     public void testWhereToExpression() throws Exception {
         String[] strs = new String[]{
-//                "age > 1 and age < 4 and age <= 1 and cate = '' and cate = null",
-//                "cate2 is null and cate3 is not null and not a",
-//                "name1 like 'aaa%' or name2 not like 'aaa%'",
-//                "name1 regexp '[0-9]+' and name1 not regexp '[0-9]a'",
-//                "age between 1 and 10",
+                "age > 1 and age < 4 and age <= 1 and cate = '' and cate = null",
+                "cate2 is null and cate3 is not null and not a",
+                "name1 like 'aaa%' or name2 not like 'aaa%'",
+                "name1 regexp '[0-9]+' and name1 not regexp '[0-9]a'",
+                "age between 1 and 10",
                 "case col when 1 then 'a' when 2 then 'b' else 'c' end",
                 "case when col = 1 then 'a' when col = 2 then 'b' else 'c' end",
         };
@@ -105,7 +108,9 @@ public class SqlParserTest {
         Expression[] expressions = new Expression[strs.length];
         for (int i = 0; i < strs.length; i++) {
             exps[i] = CCJSqlParserUtil.parseExpression(strs[i]);
+            expressions[i] = jsqlExprToExpression(exps[i]);
             System.out.println(exps[i] + ":" + exps[i].getClass().getSimpleName());
+            System.out.println(expressions[i]);
         }
     }
 
@@ -131,7 +136,11 @@ public class SqlParserTest {
             BinaryExpression binary = (BinaryExpression) expr;
             Expression left = jsqlExprToExpression(binary.getLeftExpression());
             Expression right = jsqlExprToExpression(binary.getRightExpression());
-            if (binary instanceof Addition) {
+            if (binary instanceof AndExpression) {
+                return new And(left, right);
+            } else if (binary instanceof OrExpression) {
+                return new Or(left, right);
+            } else if (binary instanceof Addition) {
                 return new Add(left, right);
             } else if (binary instanceof Subtraction) {
                 return new Subtract(left, right);
@@ -145,6 +154,8 @@ public class SqlParserTest {
                 return new GreaterThan(left, right);
             } else if (binary instanceof net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals) {
                 return new GreaterThanOrEqual(left, right);
+            } else if (binary instanceof EqualsTo) {
+                return new EqualTo(left, right);
             } else if (binary instanceof MinorThan) {
                 return new LessThan(left, right);
             } else if (binary instanceof MinorThanEquals) {
@@ -165,7 +176,7 @@ public class SqlParserTest {
                 }
                 return like.isNot()? new Not(e): e;
             } else {
-                throw new UnsupportedOperationException(binary.getClass().getSimpleName());
+                throw new UnsupportedOperationException(expr.getClass().getSimpleName() + " for " + expr);
             }
         } else if (expr instanceof IsNullExpression) {
             IsNullExpression isNull = ((IsNullExpression) expr);
@@ -184,8 +195,21 @@ public class SqlParserTest {
             return between.isNot()? new Not(e): e;
         } else if (expr instanceof CaseExpression) {
             CaseExpression c = ((CaseExpression) expr);
-
-            return null;
+            List<WhenClause> whenClauseList = c.getWhenClauses();
+            List<Expression> branches = new ArrayList<>(whenClauseList.size() * 2);
+            if(c.getSwitchExpression() == null){
+                for (WhenClause whenClause : whenClauseList) {
+                    branches.add(jsqlExprToExpression(whenClause.getWhenExpression()));
+                    branches.add(jsqlExprToExpression(whenClause.getThenExpression()));
+                }
+            }else{
+                Expression switchExpression = jsqlExprToExpression(c.getSwitchExpression());
+                for (WhenClause whenClause : whenClauseList) {
+                    branches.add(new EqualTo(switchExpression, jsqlExprToExpression(whenClause.getWhenExpression())));
+                    branches.add(jsqlExprToExpression(whenClause.getThenExpression()));
+                }
+            }
+            return c.getElseExpression() == null?new CaseWhen(branches):new CaseWhen(branches, jsqlExprToExpression(c.getElseExpression()));
         } else if (expr instanceof LongValue) {
             long longVal = ((LongValue) expr).getValue();
             if (longVal <= Integer.MAX_VALUE && longVal >= Integer.MIN_VALUE) {
@@ -199,9 +223,11 @@ public class SqlParserTest {
         } else if (expr instanceof StringValue) {
             String value = ((StringValue) expr).getValue();
             return new Literal(value, Types.STRING);
+        } else if (expr instanceof NullValue) {
+            return new Literal(null, Types.NULL);
         }
 
-        throw new UnsupportedOperationException(expr.getClass().getSimpleName());
+        throw new UnsupportedOperationException(expr.getClass().getSimpleName() + " for " + expr);
     }
 
 }
