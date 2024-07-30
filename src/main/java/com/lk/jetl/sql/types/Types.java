@@ -1,6 +1,8 @@
 package com.lk.jetl.sql.types;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -147,6 +149,26 @@ public class Types {
         }
 
         throw new UnsupportedOperationException("不支持的类型:" + type);
+    }
+
+    public static Comparator getComparator(DataType t){
+        if(t instanceof IntegerType){
+            return (x, y) -> Integer.compare((Integer) x, (Integer)y);
+        } else if (t instanceof LongType) {
+            return (x, y) -> Long.compare((Long) x, (Long)y);
+        } else if (t instanceof FloatType) {
+            return (x, y) -> Float.compare((Float) x, (Float)y);
+        } else if (t instanceof DoubleType) {
+            return (x, y) -> Double.compare((Double) x, (Double)y);
+        } else if (t instanceof BooleanType) {
+            return (x, y) -> Boolean.compare((Boolean) x, (Boolean)y);
+        } else if (t instanceof BinaryType) {
+            return (x, y) -> Arrays.compare((byte[]) x, (byte[])y);
+        } else if (t instanceof StringType) {
+            return (x, y) -> ((String) x).compareTo((String)y);
+        }
+
+        throw new UnsupportedOperationException();
     }
 
     static void buildFormattedString(DataType dataType, String prefix, StringBuilder sb, int maxDepth){

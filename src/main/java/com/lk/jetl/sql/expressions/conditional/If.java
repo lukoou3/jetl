@@ -3,6 +3,7 @@ package com.lk.jetl.sql.expressions.conditional;
 import com.lk.jetl.sql.Row;
 import com.lk.jetl.sql.analysis.TypeCheckResult;
 import com.lk.jetl.sql.analysis.TypeCoercion;
+import com.lk.jetl.sql.expressions.ComplexTypeMergingExpression;
 import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
@@ -10,7 +11,7 @@ import com.lk.jetl.sql.types.Types;
 import java.util.Arrays;
 import java.util.List;
 
-public class If extends Expression {
+public class If extends ComplexTypeMergingExpression {
     public final Expression predicate;
     public final Expression trueValue;
     public final Expression falseValue;
@@ -25,6 +26,11 @@ public class If extends Expression {
     @Override
     public List<Expression> getChildren() {
         return Arrays.asList(predicate, trueValue, falseValue);
+    }
+
+    @Override
+    protected List<DataType> getInputTypesForMerging() {
+        return Arrays.asList(trueValue.getDataType(), falseValue.getDataType());
     }
 
     @Override
@@ -48,7 +54,7 @@ public class If extends Expression {
     }
 
     @Override
-    public DataType getDataType() {
-        return trueValue.getDataType();
+    public String toString() {
+        return String.format("if (%s) %s else %s", predicate, trueValue, falseValue);
     }
 }

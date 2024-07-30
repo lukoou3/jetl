@@ -16,7 +16,7 @@ public abstract class BinaryComparison extends BinaryOperator {
 
     @Override
     public DataType getDataType() {
-        return Types.DOUBLE;
+        return Types.BOOLEAN;
     }
 
     @Override
@@ -28,23 +28,16 @@ public abstract class BinaryComparison extends BinaryOperator {
     public TypeCheckResult checkInputDataTypes() {
         TypeCheckResult checkResult = super.checkInputDataTypes();
         if(checkResult.isSuccess()){
-            // checkForOrderingExpr
+            if(!(left.getDataType() instanceof AtomicType)){
+                return TypeCheckResult.typeCheckFailure("not support ordering on type " + left.getDataType());
+            }
         }
         return checkResult;
     }
 
     protected Comparator<Object> getComparator(){
         if(comparator == null){
-            DataType dataType = left.getDataType();
-            if(dataType instanceof IntegerType){
-                comparator = (x, y) -> Integer.compare((Integer) x, (Integer)y);
-            } else if (dataType instanceof LongType) {
-                comparator = (x, y) -> Long.compare((Long) x, (Long)y);
-            } else if (dataType instanceof DoubleType) {
-                comparator = (x, y) -> Double.compare((Double) x, (Double)y);
-            }else{
-                throw new UnsupportedOperationException();
-            }
+            comparator = Types.getComparator(left.getDataType());
         }
 
         return comparator;
