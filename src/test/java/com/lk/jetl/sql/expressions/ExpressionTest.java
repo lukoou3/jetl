@@ -67,7 +67,7 @@ public class ExpressionTest {
         System.out.println(e);
         Expression expression = TypeCoercion.applyTypeCoercionRules(e);
         System.out.println(expression);
-        expression = Optimizer.applyOptimizers(expression);
+        expression = Optimizer.optimize(expression);
         CheckAnalysis.checkAnalysis(expression);
         System.out.println(expression);
         expression.open();
@@ -92,7 +92,7 @@ public class ExpressionTest {
         System.out.println(e);
         Expression expression = TypeCoercion.applyTypeCoercionRules(e);
         System.out.println(expression);
-        expression = Optimizer.applyOptimizers(expression);
+        expression = Optimizer.optimize(expression);
         CheckAnalysis.checkAnalysis(expression);
         System.out.println(expression);
         expression.open();
@@ -115,7 +115,7 @@ public class ExpressionTest {
         System.out.println(e);
         Expression expression = TypeCoercion.applyTypeCoercionRules(e);
         System.out.println(expression);
-        expression = Optimizer.applyOptimizers(expression);
+        expression = Optimizer.optimize(expression);
         CheckAnalysis.checkAnalysis(expression);
         System.out.println(expression);
         expression.open();

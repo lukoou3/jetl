@@ -16,6 +16,6 @@ public class RLike extends StringRegexExpression {
 
     @Override
     protected boolean matches(Pattern regex, String str) {
-        return regex.matcher(str).find(0);
+        return regex.matcher(str).find(0); // 包含匹配
     }
 }

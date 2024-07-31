@@ -19,12 +19,10 @@ public class TypeCoercion {
     private static List<DataType> numericPrecedence = Arrays.asList(INT, BIGINT, DOUBLE);
 
     public static Expression applyTypeCoercionRules(Expression e){
-        return e.transformUp(x -> {
-            for (Rule rule : typeCoercionRules) {
-                x = rule.apply(x, null);
-            }
-            return x;
-        });
+        for (Rule rule : typeCoercionRules) {
+            e = rule.apply(e);
+        }
+        return e;
     }
 
     public static boolean haveSameType(List<DataType> types) {
@@ -92,8 +90,7 @@ public class TypeCoercion {
     }
 
     public static class IfCoercion extends Rule {
-        @Override
-        public Expression apply(Expression e, StructType schema) {
+        protected Expression applyChild(Expression e) {
             if (!e.isChildrenResolved()) {
                 return e;
             }
@@ -117,7 +114,7 @@ public class TypeCoercion {
 
     public static class ImplicitTypeCasts extends Rule {
         @Override
-        public Expression apply(Expression e, StructType schema) {
+        public Expression applyChild(Expression e) {
             if (!e.isChildrenResolved()) {
                 return e;
             }

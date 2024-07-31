@@ -7,12 +7,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class UnresolvedFunction extends Expression {
-    final String name;
-    final List<Expression> arguments;
+    public final String name;
+    public final List<Expression> arguments;
 
     public UnresolvedFunction(String name, List<Expression> arguments) {
         this.name = name;
         this.arguments = arguments;
+        this.args = new Object[]{name, arguments};
     }
 
     @Override

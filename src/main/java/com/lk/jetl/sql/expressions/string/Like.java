@@ -19,6 +19,6 @@ public class Like extends StringRegexExpression{
 
     @Override
     protected boolean matches(Pattern regex, String str) {
-        return regex.matcher(str).matches();
+        return regex.matcher(str).matches(); // 完全匹配
     }
 }

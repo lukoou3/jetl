@@ -1,14 +1,12 @@
 package com.lk.jetl.sql.analysis;
 
 
-import com.lk.jetl.sql.expressions.Cast;
-import com.lk.jetl.sql.expressions.Expression;
-import com.lk.jetl.sql.expressions.arithmetic.Add;
-import com.lk.jetl.sql.expressions.conditional.If;
-import com.lk.jetl.sql.expressions.string.Substring;
+import com.lk.jetl.sql.expressions.*;
+import com.lk.jetl.sql.expressions.conditional.*;
+import com.lk.jetl.sql.expressions.nvl.*;
+import com.lk.jetl.sql.expressions.string.*;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,9 +14,17 @@ public class FunctionRegistryUtils {
     static Map<String, FunctionBuilder> expressions = new HashMap<>();
 
     static {
+        // misc
         expressions.put("if", expression(If.class));
+        expressions.put("coalesce", expression(Coalesce.class));
+        expressions.put("isnull", expression(IsNull.class));
+        expressions.put("isnotnull", expression(IsNotNull.class));
+        // math functions
+        // string functions
+        expressions.put("length", expression(Length.class));
         expressions.put("substr", expression(Substring.class));
         expressions.put("substring", expression(Substring.class));
+        // cast
         expressions.put("cast", expression(Cast.class));
     }
 
