@@ -109,7 +109,7 @@ public class SqlParserTest {
 
     @Test
     public void testSelectItem() throws Exception {
-        String sql = "select a.c[0] a1, a.c.b[0] a2, a[0] aa, a['a'] ab, a[0][1] ac, a['0']['1'] ad, s.a.z z1, s.z z, `s.z` z2, s['z'] z3,t.*,*,t.name, age, substr(name, 1, 4) name2, age + 1 age2, age * 2 age3, age - 2 age4, cast(a as int2) a, int(a) b, 1 c, -2 d from table t";
+        String sql = "select trim(name) name3,ltrim(name, 'SL') name0, trim(name, 'SL') name2, trim('SL' FROM name) name1, a.c[0] a1, a.c.b[0] a2, a[0] aa, a['a'] ab, a[0][1] ac, a['0']['1'] ad, s.a.z z1, s.z z, `s.z` z2, s['z'] z3,t.*,*,t.name, age, substr(name, 1, 4) name2, age + 1 age2, age * 2 age3, age - 2 age4, cast(a as int2) a, int(a) b, 1 c, -2 d from table t";
         Statement statement = CCJSqlParserUtil.parse(sql);
         System.out.println(statement);
         PlainSelect selectBody = ((PlainSelect) statement);
