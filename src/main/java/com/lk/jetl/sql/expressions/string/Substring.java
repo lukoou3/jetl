@@ -38,6 +38,11 @@ public class Substring extends TernaryExpression {
     }
 
     @Override
+    public boolean expectsInputTypes() {
+        return true;
+    }
+
+    @Override
     public List<AbstractDataType> inputTypes() {
         return List.of(STRING, INT, INT);
     }

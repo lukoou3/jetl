@@ -30,6 +30,8 @@ public class Literal extends LeafExpression {
             return "null";
         } else if (dataType instanceof LongType) {
             return value + "L";
+        } else if (dataType instanceof StringType) {
+            return "'" + value + "'";
         } else {
             return value.toString();
         }

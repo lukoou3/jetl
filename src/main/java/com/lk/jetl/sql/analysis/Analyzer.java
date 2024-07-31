@@ -1,10 +1,9 @@
 package com.lk.jetl.sql.analysis;
 
-import com.lk.jetl.sql.expressions.BoundReference;
-import com.lk.jetl.sql.expressions.Expression;
-import com.lk.jetl.sql.expressions.UnresolvedAttribute;
-import com.lk.jetl.sql.expressions.UnresolvedFunction;
+import com.lk.jetl.sql.expressions.*;
+import com.lk.jetl.sql.expressions.complextype.GetArrayItem;
 import com.lk.jetl.sql.rule.Rule;
+import com.lk.jetl.sql.types.ArrayType;
 import com.lk.jetl.sql.types.StructType;
 
 import java.util.*;
@@ -24,12 +23,18 @@ public class Analyzer {
         Expression curExpr = e;
         Expression lastExpr = curExpr;
         ResolveReferences resolveRule = new ResolveReferences(schema);
-        curExpr = resolveRule.apply(curExpr);
-        for (Rule rule : rules) {
-            curExpr = rule.apply(curExpr);
+        int i = 0;
+        while (i < 10){
+            curExpr = resolveRule.apply(curExpr);
+            for (Rule rule : rules) {
+                curExpr = rule.apply(curExpr);
+            }
+            //System.out.println("curExpr eq lastExpr:" + curExpr.equals(lastExpr));
+            if(curExpr.equals(lastExpr)){
+                break;
+            }
+            lastExpr = curExpr;
         }
-        System.out.println("curExpr eq lastExpr:" + curExpr.equals(lastExpr));
-        lastExpr = curExpr;
 
         CheckAnalysis.checkAnalysis(lastExpr);
 
@@ -61,6 +66,17 @@ public class Analyzer {
                 return new BoundReference(idx, schema.fields[idx].dataType, name);
             }
 
+            if (e instanceof UnresolvedExtractValue && ((UnresolvedExtractValue) e).left.isResolved()) {
+                UnresolvedExtractValue u = (UnresolvedExtractValue) e;
+                Expression child = u.left;
+                Expression fieldName = u.right;
+                if(child.getDataType() instanceof ArrayType){
+                    return new GetArrayItem(child, fieldName);
+                }else{
+                    throw new IllegalArgumentException(e.toString());
+                }
+            }
+
             return e;
         }
     }
@@ -74,6 +90,7 @@ public class Analyzer {
                 Expression func = FunctionRegistryUtils.lookupFunction(u.name, u.arguments);
                 return func;
             }
+
             return e;
         }
     }

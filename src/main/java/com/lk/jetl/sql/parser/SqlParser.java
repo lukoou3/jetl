@@ -8,8 +8,8 @@ import com.lk.jetl.sql.expressions.nvl.IsNotNull;
 import com.lk.jetl.sql.expressions.nvl.IsNull;
 import com.lk.jetl.sql.expressions.predicate.*;
 import com.lk.jetl.sql.expressions.predicate.GreaterThan;
-import com.lk.jetl.sql.expressions.string.Like;
-import com.lk.jetl.sql.expressions.string.RLike;
+import com.lk.jetl.sql.expressions.regexp.Like;
+import com.lk.jetl.sql.expressions.regexp.RLike;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
 import net.sf.jsqlparser.expression.*;
@@ -33,8 +33,21 @@ public class SqlParser {
 
     static Expression jsqlExpressionConvert(net.sf.jsqlparser.expression.Expression expr) {
         if (expr instanceof Column) {
-            String columnName = ((Column) expr).getColumnName();
-            return new UnresolvedAttribute(List.of(columnName));
+            Column col = (Column) expr;
+            String columnName = (col).getColumnName();
+            if(col.getArrayConstructor() == null){
+                return new UnresolvedAttribute(List.of(columnName));
+            }else{
+                ArrayConstructor constructor = col.getArrayConstructor();
+                if(constructor.getExpressions().size() == 1 && !constructor.isArrayKeyword()){
+                    return new UnresolvedExtractValue(new UnresolvedAttribute(List.of(columnName)), jsqlExpressionConvert(constructor.getExpressions().get(0)));
+                }
+            }
+        } else if (expr instanceof ArrayExpression) {
+            ArrayExpression array = (ArrayExpression) expr;
+            if(array.getIndexExpression() != null){
+                return new UnresolvedExtractValue(jsqlExpressionConvert(array.getObjExpression()), jsqlExpressionConvert(array.getIndexExpression()));
+            }
         } else if (expr instanceof Function) {
             Function function = (Function) expr;
             String name = function.getName();

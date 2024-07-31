@@ -1,5 +1,6 @@
 package com.lk.jetl.sql.parser;
 
+import com.alibaba.fastjson2.JSON;
 import com.lk.jetl.sql.GenericRow;
 import com.lk.jetl.sql.Row;
 import com.lk.jetl.sql.analysis.Analyzer;
@@ -24,8 +25,8 @@ public class SqlParserTest {
 
     @Test
     public void testSqlParser() throws Exception {
-        StructType schema = Types.parseStructType("struct<id:bigint, name:string, age:int, age1:int, age2:bigint>");
-        String sql = "select id, name, substr(name, 1, 4) name2, age1, age2, age1 + age2 ag3 from table where age between 20 and 30";
+        StructType schema = Types.parseStructType("struct<id:bigint, name:string, age:int, age1:int, age2:bigint, counts:array<int>>");
+        String sql = "select id, name, substr(name, 1, 1) name1, split(name, ',')[2] name2, age1, age2, age1 + age2 ag3, counts, counts[1] count1, counts[2] count2 from table where age between 20 and 30";
         PlainSelect select = (PlainSelect)CCJSqlParserUtil.parse(sql);
         List<SelectItem<?>> selectItems = select.getSelectItems();
         Expression[] expressions = new Expression[selectItems.size()];
@@ -50,11 +51,11 @@ public class SqlParserTest {
             expression.open();
         }
         Row[] datas = new Row[]{
-             new GenericRow(new Object[]{1L, "abcdef", 18, 20, 21L}),
-             new GenericRow(new Object[]{2L, "abcdef", 20, 120, 21L}),
-             new GenericRow(new Object[]{3L, "abc", 25, 220, 21L}),
-             new GenericRow(new Object[]{4L, "abc123", 30, 320, 21L}),
-             new GenericRow(new Object[]{5L, "abc44", 31, 420, 21L}),
+             new GenericRow(new Object[]{1L, "ab,cd,ef", 18, 20, 21L, new Object[]{1, 2, 3, 4}}),
+             new GenericRow(new Object[]{2L, "ab,cd,ef", 20, 120, 21L, new Object[]{1, 2, 3, 4}}),
+             new GenericRow(new Object[]{3L, "ab,c", 25, 220, 21L, new Object[]{10, 20, 30, 40}}),
+             new GenericRow(new Object[]{4L, "abc,12,3", 30, 320, 21L, new Object[]{100, 200}}),
+             new GenericRow(new Object[]{5L, "ab,c4,4", 31, 420, 21L, new Object[]{1, 2, 3, 4}}),
         };
         Object w;
         Object[] rsts = new Object[expressions.length];
@@ -64,7 +65,7 @@ public class SqlParserTest {
                 for (int i = 0; i < expressions.length; i++) {
                     rsts[i] = expressions[i].eval(row);
                 }
-                System.out.println(Arrays.toString(rsts));
+                System.out.println(JSON.toJSONString(rsts));
             }else{
                 System.out.println("filter");
             }
@@ -108,7 +109,7 @@ public class SqlParserTest {
 
     @Test
     public void testSelectItem() throws Exception {
-        String sql = "select s.a.z z1, s.z z, `s.z` z2, s['z'] z3,t.*,*,t.name, age, substr(name, 1, 4) name2, age + 1 age2, age * 2 age3, age - 2 age4, cast(a as int2) a, int(a) b, 1 c, -2 d from table t";
+        String sql = "select a.c[0] a1, a.c.b[0] a2, a[0] aa, a['a'] ab, a[0][1] ac, a['0']['1'] ad, s.a.z z1, s.z z, `s.z` z2, s['z'] z3,t.*,*,t.name, age, substr(name, 1, 4) name2, age + 1 age2, age * 2 age3, age - 2 age4, cast(a as int2) a, int(a) b, 1 c, -2 d from table t";
         Statement statement = CCJSqlParserUtil.parse(sql);
         System.out.println(statement);
         PlainSelect selectBody = ((PlainSelect) statement);

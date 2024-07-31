@@ -4,6 +4,7 @@ package com.lk.jetl.sql.analysis;
 import com.lk.jetl.sql.expressions.*;
 import com.lk.jetl.sql.expressions.conditional.*;
 import com.lk.jetl.sql.expressions.nvl.*;
+import com.lk.jetl.sql.expressions.regexp.StringSplit;
 import com.lk.jetl.sql.expressions.string.*;
 
 import java.lang.reflect.Constructor;
@@ -22,6 +23,7 @@ public class FunctionRegistryUtils {
         // math functions
         // string functions
         expressions.put("length", expression(Length.class));
+        expressions.put("split", expression(StringSplit.class));
         expressions.put("substr", expression(Substring.class));
         expressions.put("substring", expression(Substring.class));
         // cast

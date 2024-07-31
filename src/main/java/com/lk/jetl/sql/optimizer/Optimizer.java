@@ -5,6 +5,7 @@ import com.lk.jetl.sql.expressions.Literal;
 import com.lk.jetl.sql.expressions.predicate.And;
 import com.lk.jetl.sql.expressions.predicate.EqualTo;
 import com.lk.jetl.sql.expressions.predicate.GreaterThanOrEqual;
+import com.lk.jetl.sql.expressions.regexp.Like;
 import com.lk.jetl.sql.expressions.string.*;
 import com.lk.jetl.sql.rule.Rule;
 import com.lk.jetl.sql.types.StringType;
