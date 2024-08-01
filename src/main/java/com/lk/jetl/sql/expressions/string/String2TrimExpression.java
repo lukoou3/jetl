@@ -4,7 +4,7 @@ import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.types.AbstractDataType;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
-import com.lk.jetl.sql.util.Option;
+import com.lk.jetl.util.Option;
 
 import java.util.ArrayList;
 import java.util.List;

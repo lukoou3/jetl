@@ -1,7 +1,7 @@
 package com.lk.jetl.sql.expressions.regexp;
 
 import com.lk.jetl.sql.expressions.Expression;
-import com.lk.jetl.sql.util.StringUtils;
+import com.lk.jetl.util.StringUtils;
 
 import java.util.regex.Pattern;
 

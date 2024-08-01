@@ -2,8 +2,8 @@ package com.lk.jetl.sql.expressions.string;
 
 import com.lk.jetl.sql.Row;
 import com.lk.jetl.sql.expressions.Expression;
-import com.lk.jetl.sql.util.Option;
-import com.lk.jetl.sql.util.StringUtils;
+import com.lk.jetl.util.Option;
+import com.lk.jetl.util.StringUtils;
 
 public class StringTrim extends String2TrimExpression {
     public StringTrim(Expression srcStr, Option<Expression> trimStr) {

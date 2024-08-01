@@ -15,7 +15,7 @@ import com.lk.jetl.sql.expressions.string.StringTrimLeft;
 import com.lk.jetl.sql.expressions.string.StringTrimRight;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
-import com.lk.jetl.sql.util.Option;
+import com.lk.jetl.util.Option;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;

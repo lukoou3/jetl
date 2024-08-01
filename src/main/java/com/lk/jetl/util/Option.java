@@ -1,4 +1,4 @@
-package com.lk.jetl.sql.util;
+package com.lk.jetl.util;
 
 import java.io.Serializable;
 import java.util.NoSuchElementException;
