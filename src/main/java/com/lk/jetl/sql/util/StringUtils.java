@@ -34,4 +34,20 @@ public class StringUtils {
         return "(?s)" + out.toString(); // (?s) enables dotall mode, causing "." to match new lines
     }
 
+    public static String trim(String srcStr, boolean leading, boolean trailing, String trimStr) {
+        trimStr = trimStr == null || trimStr.isEmpty() ? " " : trimStr;
+        int begin = 0, end = srcStr.length();
+        if (leading) {
+            while (begin < end && trimStr.indexOf(srcStr.charAt(begin)) >= 0) {
+                begin++;
+            }
+        }
+        if (trailing) {
+            while (end > begin && trimStr.indexOf(srcStr.charAt(end - 1)) >= 0) {
+                end--;
+            }
+        }
+        // substring() returns self if start == 0 && end == length()
+        return srcStr.substring(begin, end);
+    }
 }

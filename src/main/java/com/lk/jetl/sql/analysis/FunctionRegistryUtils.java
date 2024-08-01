@@ -4,6 +4,7 @@ package com.lk.jetl.sql.analysis;
 import com.lk.jetl.sql.expressions.*;
 import com.lk.jetl.sql.expressions.conditional.*;
 import com.lk.jetl.sql.expressions.nvl.*;
+import com.lk.jetl.sql.expressions.regexp.RegExpExtract;
 import com.lk.jetl.sql.expressions.regexp.StringSplit;
 import com.lk.jetl.sql.expressions.string.*;
 
@@ -26,6 +27,11 @@ public class FunctionRegistryUtils {
         expressions.put("split", expression(StringSplit.class));
         expressions.put("substr", expression(Substring.class));
         expressions.put("substring", expression(Substring.class));
+        expressions.put("trim", expression(StringTrim.class));
+        expressions.put("ltrim", expression(StringTrimLeft.class));
+        expressions.put("rtrim", expression(StringTrimRight.class));
+        expressions.put("replace", expression(StringReplace.class));
+        expressions.put("regexp_extract", expression(RegExpExtract.class));
         // cast
         expressions.put("cast", expression(Cast.class));
     }

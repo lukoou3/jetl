@@ -10,8 +10,12 @@ import com.lk.jetl.sql.expressions.predicate.*;
 import com.lk.jetl.sql.expressions.predicate.GreaterThan;
 import com.lk.jetl.sql.expressions.regexp.Like;
 import com.lk.jetl.sql.expressions.regexp.RLike;
+import com.lk.jetl.sql.expressions.string.StringTrim;
+import com.lk.jetl.sql.expressions.string.StringTrimLeft;
+import com.lk.jetl.sql.expressions.string.StringTrimRight;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
+import com.lk.jetl.sql.util.Option;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
@@ -25,7 +29,7 @@ import java.util.List;
 
 public class SqlParser {
 
-    public static Expression parser(String sql){
+    public static Expression parser(String sql) {
 
 
         return null;
@@ -35,17 +39,17 @@ public class SqlParser {
         if (expr instanceof Column) {
             Column col = (Column) expr;
             String columnName = (col).getColumnName();
-            if(col.getArrayConstructor() == null){
+            if (col.getArrayConstructor() == null) {
                 return new UnresolvedAttribute(List.of(columnName));
-            }else{
+            } else {
                 ArrayConstructor constructor = col.getArrayConstructor();
-                if(constructor.getExpressions().size() == 1 && !constructor.isArrayKeyword()){
+                if (constructor.getExpressions().size() == 1 && !constructor.isArrayKeyword()) {
                     return new UnresolvedExtractValue(new UnresolvedAttribute(List.of(columnName)), jsqlExpressionConvert(constructor.getExpressions().get(0)));
                 }
             }
         } else if (expr instanceof ArrayExpression) {
             ArrayExpression array = (ArrayExpression) expr;
-            if(array.getIndexExpression() != null){
+            if (array.getIndexExpression() != null) {
                 return new UnresolvedExtractValue(jsqlExpressionConvert(array.getObjExpression()), jsqlExpressionConvert(array.getIndexExpression()));
             }
         } else if (expr instanceof Function) {
@@ -57,6 +61,28 @@ public class SqlParser {
                 arguments.add(jsqlExpressionConvert(parameters.get(i)));
             }
             return new UnresolvedFunction(name, arguments);
+        } else if (expr instanceof TrimFunction) {
+            TrimFunction trim = (TrimFunction) expr;
+            TrimFunction.TrimSpecification trimAtion = trim.getTrimSpecification();
+            Expression srcStr = null;
+            Expression trimStr = null;
+            if (trim.getFromExpression() == null) {
+                srcStr = jsqlExpressionConvert(trim.getExpression());
+            } else if (trim.getExpression() == null) {
+                srcStr = jsqlExpressionConvert(trim.getFromExpression());
+            } else {
+                srcStr = trim.isUsingFromKeyword() ? jsqlExpressionConvert(trim.getFromExpression()) : jsqlExpressionConvert(trim.getExpression());
+                trimStr = trim.isUsingFromKeyword() ? jsqlExpressionConvert(trim.getExpression()) : jsqlExpressionConvert(trim.getFromExpression());
+            }
+            if(trimAtion == null || trimAtion == TrimFunction.TrimSpecification.BOTH){
+                return new StringTrim(srcStr, Option.option(trimStr));
+            } else if (trimAtion == TrimFunction.TrimSpecification.LEADING) {
+                return new StringTrimLeft(srcStr, Option.option(trimStr));
+            } else if (trimAtion == TrimFunction.TrimSpecification.TRAILING) {
+                return new StringTrimRight(srcStr, Option.option(trimStr));
+            }else{
+                throw new UnsupportedOperationException(expr.getClass().getSimpleName() + " for Function trim doesn't support with type" + trimAtion + ". Please use BOTH, LEADING or TRAILING as trim type");
+            }
         } else if (expr instanceof CastExpression) {
             CastExpression cast = (CastExpression) expr;
             Expression expression = jsqlExpressionConvert(cast.getLeftExpression());
@@ -93,7 +119,7 @@ public class SqlParser {
             } else if (binary instanceof LikeExpression) {
                 LikeExpression like = ((LikeExpression) expr);
                 Expression e;
-                switch (like.getLikeKeyWord()){
+                switch (like.getLikeKeyWord()) {
                     case LIKE:
                         e = new Like(left, right);
                         break;
@@ -104,14 +130,14 @@ public class SqlParser {
                     default:
                         throw new UnsupportedOperationException(expr.toString());
                 }
-                return like.isNot()? new Not(e): e;
+                return like.isNot() ? new Not(e) : e;
             } else {
                 throw new UnsupportedOperationException(expr.getClass().getSimpleName() + " for " + expr);
             }
         } else if (expr instanceof IsNullExpression) {
             IsNullExpression isNull = ((IsNullExpression) expr);
             Expression child = jsqlExpressionConvert(isNull.getLeftExpression());
-            return isNull.isNot()? new IsNotNull(child): new IsNull(child);
+            return isNull.isNot() ? new IsNotNull(child) : new IsNull(child);
         } else if (expr instanceof NotExpression) {
             NotExpression not = ((NotExpression) expr);
             Expression child = jsqlExpressionConvert(not.getExpression());
@@ -122,24 +148,24 @@ public class SqlParser {
             Expression start = jsqlExpressionConvert(between.getBetweenExpressionStart());
             Expression end = jsqlExpressionConvert(between.getBetweenExpressionEnd());
             Expression e = new And(new GreaterThanOrEqual(value, start), new LessThanOrEqual(value, end));
-            return between.isNot()? new Not(e): e;
+            return between.isNot() ? new Not(e) : e;
         } else if (expr instanceof CaseExpression) {
             CaseExpression c = ((CaseExpression) expr);
             List<WhenClause> whenClauseList = c.getWhenClauses();
             List<Expression> branches = new ArrayList<>(whenClauseList.size() * 2);
-            if(c.getSwitchExpression() == null){
+            if (c.getSwitchExpression() == null) {
                 for (WhenClause whenClause : whenClauseList) {
                     branches.add(jsqlExpressionConvert(whenClause.getWhenExpression()));
                     branches.add(jsqlExpressionConvert(whenClause.getThenExpression()));
                 }
-            }else{
+            } else {
                 Expression switchExpression = jsqlExpressionConvert(c.getSwitchExpression());
                 for (WhenClause whenClause : whenClauseList) {
                     branches.add(new EqualTo(switchExpression, jsqlExpressionConvert(whenClause.getWhenExpression())));
                     branches.add(jsqlExpressionConvert(whenClause.getThenExpression()));
                 }
             }
-            return c.getElseExpression() == null?new CaseWhen(branches):new CaseWhen(branches, jsqlExpressionConvert(c.getElseExpression()));
+            return c.getElseExpression() == null ? new CaseWhen(branches) : new CaseWhen(branches, jsqlExpressionConvert(c.getElseExpression()));
         } else if (expr instanceof LongValue) {
             long longVal = ((LongValue) expr).getValue();
             if (longVal <= Integer.MAX_VALUE && longVal >= Integer.MIN_VALUE) {

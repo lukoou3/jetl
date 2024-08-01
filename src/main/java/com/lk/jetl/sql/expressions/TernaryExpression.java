@@ -11,14 +11,11 @@ public abstract class TernaryExpression extends Expression {
     }
 
     @Override
-    public void open() {
-        super.open();
-        exprs = getChildren().toArray(Expression[]::new);
-        assert exprs.length == 3;
-    }
-
-    @Override
     public Object eval(Row input) {
+        if(exprs == null){
+            exprs = getChildren().toArray(Expression[]::new);
+            assert exprs.length == 3;
+        }
         Object value1 = exprs[0].eval(input);
         if (value1 != null) {
             Object value2 = exprs[1].eval(input);
