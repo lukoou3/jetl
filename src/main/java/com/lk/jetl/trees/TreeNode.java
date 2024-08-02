@@ -1,4 +1,4 @@
-package com.lk.jetl.sql.trees;
+package com.lk.jetl.trees;
 
 import com.lk.jetl.sql.types.DataType;
 import org.apache.commons.lang3.ClassUtils;

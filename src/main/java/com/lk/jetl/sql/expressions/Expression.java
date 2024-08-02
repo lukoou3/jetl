@@ -2,11 +2,10 @@ package com.lk.jetl.sql.expressions;
 
 import com.lk.jetl.sql.Row;
 import com.lk.jetl.sql.analysis.TypeCheckResult;
-import com.lk.jetl.sql.trees.TreeNode;
+import com.lk.jetl.trees.TreeNode;
 import com.lk.jetl.sql.types.AbstractDataType;
 import com.lk.jetl.sql.types.DataType;
 
-import java.io.Serializable;
 import java.util.*;
 
 public abstract class Expression extends TreeNode<Expression> {

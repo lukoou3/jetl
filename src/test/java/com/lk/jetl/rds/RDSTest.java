@@ -1,7 +1,7 @@
 package com.lk.jetl.rds;
 
 import com.lk.jetl.connector.kafka.KafkaConsumerRDS;
-import com.lk.jetl.exec.JEtlContext;
+import com.lk.jetl.JEtlContext;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

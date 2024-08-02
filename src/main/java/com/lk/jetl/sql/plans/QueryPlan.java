@@ -1,7 +1,7 @@
 package com.lk.jetl.sql.plans;
 
 import com.lk.jetl.sql.expressions.Expression;
-import com.lk.jetl.sql.trees.TreeNode;
+import com.lk.jetl.trees.TreeNode;
 import com.lk.jetl.sql.types.DataType;
 
 import java.util.ArrayList;
