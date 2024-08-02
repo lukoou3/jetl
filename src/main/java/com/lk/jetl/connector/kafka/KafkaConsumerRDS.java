@@ -25,7 +25,7 @@ public class KafkaConsumerRDS<T> extends RDS<T> {
     }
 
     @Override
-    protected Partition[] getPartitions() {
+    public Partition[] getPartitions() {
         return SimplePartition.simplePartitions(this, parallelism);
     }
 

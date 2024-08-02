@@ -9,11 +9,11 @@ import com.lk.jetl.sql.types.DataType;
 import java.io.Serializable;
 import java.util.*;
 
-public abstract class Expression extends TreeNode<Expression> implements Serializable {
+public abstract class Expression extends TreeNode<Expression> {
     protected Boolean resolved;
     public void open() {
         if (args == null) {
-            throw new IllegalArgumentException(getClass().getName() + "args not init");
+            throw new IllegalArgumentException(getClass().getName() + " args not init");
         }
         for (Expression child : getChildren()) {
             child.open();

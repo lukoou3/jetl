@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.lk.jetl.sql.GenericRow;
 import com.lk.jetl.sql.Row;
 import com.lk.jetl.sql.analysis.Analyzer;
+import com.lk.jetl.sql.expressions.BoundReference;
 import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.optimizer.Optimizer;
 import com.lk.jetl.sql.types.DataType;
@@ -20,12 +21,16 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class SqlParserTest {
 
     @Test
     public void testSqlParser() throws Exception {
+        Statement statement = CCJSqlParserUtil.parse("select id, name, split(name, '_') names");
+        System.out.println(statement);
         StructType schema = Types.parseStructType("struct<id:bigint, name:string, age:int, age1:int, age2:bigint, counts:array<int>>");
+        Map<String, Integer> nameIdxes = BoundReference.nameIdxes(schema);
         String sql = "select id, name, trim(name) n1, trim(LEADING FROM name) n2, trim(TRAILING FROM name) n2, substr(name, 1, 1) name1, split(name, ',')[2] name2, age1, age2, age1 + age2 ag3, counts, counts[1] count1, counts[2] count2 from table where age between 20 and 30";
         PlainSelect select = (PlainSelect)CCJSqlParserUtil.parse(sql);
         List<SelectItem<?>> selectItems = select.getSelectItems();
@@ -39,12 +44,14 @@ public class SqlParserTest {
         System.out.println(StringUtils.repeat('#', 60));
         for (int i = 0; i < expressions.length; i++) {
             expressions[i] = Analyzer.analyse(expressions[i], schema);
-            assert expressions[i].isResolved() : expressions[i];
             expressions[i] = Optimizer.optimize(expressions[i]);
+            expressions[i] = BoundReference.bindReference(expressions[i], schema, nameIdxes);
+            assert expressions[i].isResolved() : expressions[i];
             System.out.println(expressions[i]);
         }
         where = Analyzer.analyse(where, schema);
         where = Optimizer.optimize(where);
+        where = BoundReference.bindReference(where, schema, nameIdxes);
         System.out.println(where);
         System.out.println(StringUtils.repeat('#', 60));
         for (Expression expression : expressions) {

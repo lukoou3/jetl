@@ -1,6 +1,7 @@
 package com.lk.jetl.sql.parser;
 
 import com.lk.jetl.sql.expressions.*;
+import com.lk.jetl.sql.expressions.Alias;
 import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.expressions.arithmetic.*;
 import com.lk.jetl.sql.expressions.conditional.CaseWhen;
@@ -16,23 +17,50 @@ import com.lk.jetl.sql.expressions.string.StringTrimRight;
 import com.lk.jetl.sql.types.DataType;
 import com.lk.jetl.sql.types.Types;
 import com.lk.jetl.util.Option;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.*;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.SelectItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SqlParser {
 
-    public static Expression parser(String sql) {
+    public static Expression[] parseSelect(String expr){
+        try {
+            Statement statement = CCJSqlParserUtil.parse("select " + expr);
+            if(!(statement instanceof PlainSelect)){
+                throw new UnsupportedOperationException(expr);
+            }
+            List<SelectItem<?>> selectItems = ((PlainSelect) statement).getSelectItems();
+            Expression[] expressions = new Expression[selectItems.size()];
+            for (int i = 0; i < selectItems.size(); i++) {
+                expressions[i] = jsqlExpressionConvert(selectItems.get(i).getExpression());
+                if(selectItems.get(i).getAlias() != null){
+                    expressions[i] = new Alias(expressions[i], selectItems.get(i).getAlias().getName());
+                }
+            }
+            return expressions;
+        } catch (JSQLParserException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-
-        return null;
+    public static Expression parseExpression(String expr){
+        try {
+            return jsqlExpressionConvert(CCJSqlParserUtil.parseExpression(expr));
+        } catch (JSQLParserException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     static Expression jsqlExpressionConvert(net.sf.jsqlparser.expression.Expression expr) {

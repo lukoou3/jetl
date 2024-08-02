@@ -1,14 +1,14 @@
 package com.lk.jetl.rds;
 
-import com.lk.jetl.functions.FilterFunction;
+import com.lk.jetl.functions.SinkFunction;
 import com.lk.jetl.functions.RichFunction;
 import com.lk.jetl.util.Iterator;
 
-public class FilterRDS<T> extends RDS<T> {
+public class SinkRDS<T> extends RDS<Void> {
     final RDS<T> prev;
-    final FilterFunction<T> f;
+    final SinkFunction<? super T> f;
 
-    public FilterRDS(RDS<T> prev, FilterFunction<T> f) {
+    public SinkRDS(RDS<T> prev, SinkFunction<? super T> f) {
         this.prev = prev;
         this.f = f;
     }
@@ -19,8 +19,12 @@ public class FilterRDS<T> extends RDS<T> {
     }
 
     @Override
-    public Iterator<T> compute(Partition split) {
-        return prev.compute(split).filter(f::filter);
+    public Iterator<Void> compute(Partition split) {
+        Iterator<T> iter = prev.compute(split);
+        while (iter.hasNext()){
+            f.invoke(iter.next());
+        }
+        return Iterator.empty();
     }
 
     @Override

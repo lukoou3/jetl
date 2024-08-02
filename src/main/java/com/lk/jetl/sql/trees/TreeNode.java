@@ -3,15 +3,16 @@ package com.lk.jetl.sql.trees;
 import com.lk.jetl.sql.types.DataType;
 import org.apache.commons.lang3.ClassUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class TreeNode<T> {
+public abstract class TreeNode<T> implements Serializable {
     protected Object[] args;
-    private Set<T> _containsChild;
+    private transient Set<T> _containsChild;
 
     public abstract List<T> getChildren();
 

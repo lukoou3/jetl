@@ -14,7 +14,7 @@ public class MapRDS<U, T> extends RDS<U> {
     }
 
     @Override
-    protected Partition[] getPartitions() {
+    public Partition[] getPartitions() {
         return prev.getPartitions();
     }
 

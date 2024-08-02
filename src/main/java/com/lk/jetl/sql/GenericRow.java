@@ -1,6 +1,6 @@
 package com.lk.jetl.sql;
 
-public class GenericRow implements Row {
+public class GenericRow extends Row {
     private final Object[] values;
 
     public GenericRow(Object[] values) {

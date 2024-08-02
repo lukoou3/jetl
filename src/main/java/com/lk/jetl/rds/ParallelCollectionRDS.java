@@ -14,7 +14,7 @@ public class ParallelCollectionRDS<T> extends RDS<T> {
     }
 
     @Override
-    protected Partition[] getPartitions() {
+    public Partition[] getPartitions() {
         Partition[] partitions = new Partition[parallelism];
         for (int i = 0; i < parallelism; i++) {
             partitions[i] = new ParallelCollectionPartition<>(id, i, datas);

@@ -47,10 +47,7 @@ public class Analyzer {
 
         public ResolveReferences(StructType schema) {
             this.schema = schema;
-            nameIdxes = new HashMap<>();
-            for (int i = 0; i < schema.fields.length; i++) {
-                nameIdxes.put(schema.fields[i].name, i);
-            }
+            nameIdxes = BoundReference.nameIdxes(schema);
         }
 
         @Override
@@ -63,7 +60,8 @@ public class Analyzer {
                 if (idx == null) {
                     throw new IllegalArgumentException("no col:" + name);
                 }
-                return new BoundReference(idx, schema.fields[idx].dataType, name);
+                return new AttributeReference(name, schema.fields[idx].dataType);
+                //return new BoundReference(idx, schema.fields[idx].dataType, name);
             }
 
             if (e instanceof UnresolvedExtractValue && ((UnresolvedExtractValue) e).left.isResolved()) {
