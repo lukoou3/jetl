@@ -1,6 +1,5 @@
 package com.lk.jetl.sql;
 
-import com.lk.jetl.functions.RichFunction;
 import com.lk.jetl.rds.Partition;
 import com.lk.jetl.rds.RDS;
 import com.lk.jetl.sql.analysis.Analyzer;
@@ -66,6 +65,16 @@ public class DataFrame extends RDS<Row> {
             projects[i] = project;
         }
         return new DataFrame(rds.map(new Projection(projects)), new StructType(fields));
+    }
+
+    public DataFrame query(String sql){
+        SqlParser.Query query = SqlParser.parseQuery(sql);
+        DataFrame df = this;
+        if(query.condition != null){
+            df = df.filter(query.condition);
+        }
+        df = df.select(query.projects);
+        return df;
     }
 
     @Override

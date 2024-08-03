@@ -1,5 +1,6 @@
 package com.lk.jetl.rds;
 
+import com.lk.jetl.connector.inline.InlineRDS;
 import com.lk.jetl.connector.kafka.KafkaConsumerRDS;
 import com.lk.jetl.JEtlContext;
 import org.junit.Test;
@@ -31,7 +32,15 @@ public class RDSTest{
         List<Integer> datas = List.of(1, 2, 3, 4, 5);
         RDS<Integer> rds1 = new ParallelCollectionRDS<>(datas, 2);
         RDS<Integer> rds2 = rds1.filter(x -> x % 2 == 0).map(x -> x * 100);
-        RDS<Void> rst = rds2.sink(x -> LOG.warn(x.toString()));
+        RDS<Integer> rst = rds2.sink(x -> LOG.warn(x.toString()));
+        JEtlContext.runJob(rst);
+    }
+
+    @Test
+    public void testInlineRDS() throws Exception {
+        List<Integer> datas = List.of(1, 2, 3, 4, 5);
+        RDS<Integer> rds = new InlineRDS<>(datas, 2, 10, 21, 500);
+        RDS<Integer> rst = rds.sink(x -> LOG.warn(x.toString()));
         JEtlContext.runJob(rst);
     }
 
@@ -48,7 +57,7 @@ public class RDSTest{
                 .map(x -> new String(x, StandardCharsets.UTF_8))
                 .filter(x -> x.contains("102"))
                 ;
-        RDS<Void> rst = rds.sink(x -> LOG.warn(x));
+        RDS<String> rst = rds.sink(x -> LOG.warn(x));
         JEtlContext.runJob(rst);
     }
 }

@@ -23,7 +23,7 @@ public abstract class RDS<T> implements Serializable {
         return new MapRDS(this, f);
     }
 
-    public RDS<Void> sink(SinkFunction<? super T> f){
+    public RDS<T> sink(SinkFunction<? super T> f){
         return new SinkRDS(this, f);
     }
 

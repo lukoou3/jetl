@@ -3,9 +3,9 @@ package com.lk.jetl.rds;
 import java.util.List;
 
 public class ParallelCollectionPartition<T> extends Partition{
-    final int rdsId;
-    final int slice;
-    final List<T> values;
+    public final int rdsId;
+    public final int slice;
+    public final List<T> values;
 
     public ParallelCollectionPartition(int rdsId, int slice, List<T> values) {
         this.rdsId = rdsId;

@@ -35,6 +35,29 @@ import java.util.List;
 
 public class SqlParser {
 
+    public static Query parseQuery(String sql){
+        try {
+            Statement statement = CCJSqlParserUtil.parse(sql);
+            if(!(statement instanceof PlainSelect)){
+                throw new UnsupportedOperationException(sql);
+            }
+            PlainSelect plainSelect = (PlainSelect) statement;
+            List<SelectItem<?>> selectItems = plainSelect.getSelectItems();
+            Expression[] expressions = new Expression[selectItems.size()];
+            for (int i = 0; i < selectItems.size(); i++) {
+                expressions[i] = jsqlExpressionConvert(selectItems.get(i).getExpression());
+                if(selectItems.get(i).getAlias() != null){
+                    expressions[i] = new Alias(expressions[i], selectItems.get(i).getAlias().getName());
+                }
+            }
+
+            Expression where = plainSelect.getWhere() == null? null: SqlParser.jsqlExpressionConvert(plainSelect.getWhere());
+            return new Query(expressions, where);
+        } catch (JSQLParserException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static Expression[] parseSelect(String expr){
         try {
             Statement statement = CCJSqlParserUtil.parse("select " + expr);
@@ -212,5 +235,15 @@ public class SqlParser {
         }
 
         throw new UnsupportedOperationException(expr.getClass().getSimpleName() + " for " + expr);
+    }
+
+    public static class Query {
+        public final Expression[] projects;
+        public final Expression condition;
+
+        public Query(Expression[] projects, Expression condition) {
+            this.projects = projects;
+            this.condition = condition;
+        }
     }
 }

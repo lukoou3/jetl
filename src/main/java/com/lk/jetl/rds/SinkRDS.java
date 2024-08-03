@@ -4,7 +4,7 @@ import com.lk.jetl.functions.SinkFunction;
 import com.lk.jetl.functions.RichFunction;
 import com.lk.jetl.util.Iterator;
 
-public class SinkRDS<T> extends RDS<Void> {
+public class SinkRDS<T> extends RDS<T> {
     final RDS<T> prev;
     final SinkFunction<? super T> f;
 
@@ -19,7 +19,7 @@ public class SinkRDS<T> extends RDS<Void> {
     }
 
     @Override
-    public Iterator<Void> compute(Partition split) {
+    public Iterator<T> compute(Partition split) {
         Iterator<T> iter = prev.compute(split);
         while (iter.hasNext()){
             f.invoke(iter.next());
