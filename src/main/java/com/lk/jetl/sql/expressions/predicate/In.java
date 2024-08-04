@@ -36,7 +36,7 @@ public class In extends Expression {
 
     @Override
     public boolean isFoldable() {
-        return getChildren().stream().anyMatch(x -> x.isFoldable());
+        return getChildren().stream().allMatch(x -> x.isFoldable());
     }
 
     @Override

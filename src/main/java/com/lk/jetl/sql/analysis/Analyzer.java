@@ -15,6 +15,7 @@ public class Analyzer {
         rules = new Rule[]{
                 new ResolveFunctions(),
                 new TypeCoercion.ImplicitTypeCasts(),
+                new TypeCoercion.InConversion(),
                 new TypeCoercion.IfCoercion(),
         };
     }

@@ -32,6 +32,7 @@ import net.sf.jsqlparser.statement.select.SelectItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SqlParser {
 
@@ -200,6 +201,15 @@ public class SqlParser {
             Expression end = jsqlExpressionConvert(between.getBetweenExpressionEnd());
             Expression e = new And(new GreaterThanOrEqual(value, start), new LessThanOrEqual(value, end));
             return between.isNot() ? new Not(e) : e;
+        } else if (expr instanceof InExpression) {
+            InExpression in = ((InExpression) expr);
+            Expression value = jsqlExpressionConvert(in.getLeftExpression());
+            List<net.sf.jsqlparser.expression.Expression> items = (List<net.sf.jsqlparser.expression.Expression>) in.getRightExpression();
+            List<Expression> list = items.stream()
+                    .map(x -> jsqlExpressionConvert(x))
+                    .collect(Collectors.toList());
+            Expression e = new In(value, list);
+            return in.isNot() ? new Not(e) : e;
         } else if (expr instanceof CaseExpression) {
             CaseExpression c = ((CaseExpression) expr);
             List<WhenClause> whenClauseList = c.getWhenClauses();

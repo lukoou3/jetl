@@ -4,18 +4,20 @@ import com.lk.jetl.sql.expressions.BinaryOperator;
 import com.lk.jetl.sql.expressions.Cast;
 import com.lk.jetl.sql.expressions.Expression;
 import com.lk.jetl.sql.expressions.conditional.If;
+import com.lk.jetl.sql.expressions.predicate.In;
 import com.lk.jetl.sql.rule.Rule;
 import com.lk.jetl.sql.types.*;
+import com.lk.jetl.util.Option;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.lk.jetl.sql.types.Types.*;
 
 public class TypeCoercion {
 
-    private static List<Rule> typeCoercionRules = Arrays.asList(new ImplicitTypeCasts(), new IfCoercion());
+    private static List<Rule> typeCoercionRules = Arrays.asList(new ImplicitTypeCasts(), new InConversion(), new IfCoercion());
     private static List<DataType> numericPrecedence = Arrays.asList(INT, BIGINT, DOUBLE);
 
     public static Expression applyTypeCoercionRules(Expression e){
@@ -39,17 +41,17 @@ public class TypeCoercion {
         return true;
     }
 
-    static Optional<DataType> findTightestCommonType(DataType t1, DataType t2) {
+    static Option<DataType> findTightestCommonType(DataType t1, DataType t2) {
         if (t1.equals(t2)) {
-            return Optional.of(t1);
+            return Option.of(t1);
         }
 
         if (t1 instanceof NullType) {
-            return Optional.of(t2);
+            return Option.of(t2);
         }
 
         if (t2 instanceof NullType) {
-            return Optional.of(t1);
+            return Option.of(t1);
         }
 
         if (t1 instanceof NumericType && t2 instanceof NumericType) {
@@ -59,26 +61,42 @@ public class TypeCoercion {
                     t = d;
                 }
             }
-            return Optional.of(t);
+            return Option.of(t);
         }
 
-        return Optional.empty();
+        return Option.empty();
     }
 
-    static Optional<DataType> findWiderTypeForTwo(DataType t1, DataType t2) {
-        return findTightestCommonType(t1, t2).or(() -> stringPromotion(t1, t2));
+    static Option<DataType> findWiderTypeForTwo(DataType t1, DataType t2) {
+        return findTightestCommonType(t1, t2).OrElseGet(() -> stringPromotion(t1, t2));
     }
 
-    static Optional<DataType> stringPromotion(DataType t1, DataType t2) {
+    static Option<DataType> findWiderCommonType(List<DataType> dataTypes) {
+        // findWiderTypeForTwo doesn't satisfy the associative law, i.e. (a op b) op c may not equal
+        // to a op (b op c). This is only a problem for StringType or nested StringType in ArrayType.
+        // Excluding these types, findWiderTypeForTwo satisfies the associative law. For instance,
+        // (TimestampType, IntegerType, StringType) should have StringType as the wider common type.
+        Option<DataType> commonType = Option.of(NULL);
+        for (DataType dataType : dataTypes) {
+            if(commonType.isDefined()){
+                commonType = findWiderTypeForTwo(commonType.get(), dataType);
+            }else{
+                commonType = Option.empty();
+            }
+        }
+        return commonType;
+    }
+
+    static Option<DataType> stringPromotion(DataType t1, DataType t2) {
         if (t1 instanceof StringType && t2 instanceof AtomicType) {
-            return Optional.of(STRING);
+            return Option.of(STRING);
         }
 
         if (t1 instanceof AtomicType && t2 instanceof StringType) {
-            return Optional.of(STRING);
+            return Option.of(STRING);
         }
 
-        return Optional.empty();
+        return Option.empty();
     }
 
     static Expression castIfNotSameType(Expression expr, DataType dt) {
@@ -104,7 +122,33 @@ public class TypeCoercion {
                         Expression newLeft = castIfNotSameType(left, widestType);
                         Expression newRight = castIfNotSameType(right, widestType);
                         return new If(i.predicate, newLeft, newRight);
-                    }).orElse(i);
+                    }).getOrElse(i);
+                }
+            }
+
+            return e;
+        }
+    }
+
+    public static class InConversion extends Rule {
+
+        protected Expression applyChild(Expression e) {
+            if (!e.isChildrenResolved()) {
+                return e;
+            }
+
+            if (e instanceof In) {
+                In i = (In) e;
+                DataType valueDataType = i.value.getDataType();
+                boolean different = i.list.stream().map(x -> x.getDataType()).collect(Collectors.toList()).stream()
+                        .anyMatch(x -> !valueDataType.equals(x));
+                if(different){
+                    return findWiderCommonType(i.getChildren().stream().map(x -> x.getDataType()).collect(Collectors.toList()))
+                            .map(finalDataType -> {
+                                return i.withNewChildren(i.getChildren().stream().map(x -> castIfNotSameType(x, finalDataType)).collect(Collectors.toList()));
+                            })
+                            .getOrElse(i);
+
                 }
             }
 
@@ -133,7 +177,7 @@ public class TypeCoercion {
                         return b;
                     }
 
-                }).orElse(b);
+                }).getOrElse(b);
             }
 
             return e;

@@ -4,6 +4,21 @@ import java.util.regex.Pattern;
 
 public class StringUtils {
 
+    /**
+     * Given a hex string this will return the byte array corresponding to the string .
+     *
+     * @param hex the hex String array
+     * @return a byte array that is a hex string representation of the given string. The size of the
+     *     byte array is therefore hex.length/2
+     */
+    public static byte[] hexStringToByte(final String hex) {
+        final byte[] bts = new byte[hex.length() / 2];
+        for (int i = 0; i < bts.length; i++) {
+            bts[i] = (byte) Integer.parseInt(hex.substring(2 * i, 2 * i + 2), 16);
+        }
+        return bts;
+    }
+
     public static String escapeLikeRegex(String pattern, char escapeChar) {
         StringBuilder out = new StringBuilder();
         int length = pattern.length();

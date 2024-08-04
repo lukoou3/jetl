@@ -28,6 +28,10 @@ public abstract class Option<A> implements Serializable {
         return x == null ? NONE : new Some<>(x);
     }
 
+    public static <T> Option<T> of(T x) {
+        return option(x);
+    }
+
     public abstract boolean isEmpty();
 
     public boolean isDefined() {
@@ -42,6 +46,14 @@ public abstract class Option<A> implements Serializable {
 
     public A getOrElseGet(Supplier<? extends A> supplier) {
         return isEmpty() ? supplier.get() : get();
+    }
+
+    public Option<A> OrElse(Option<A> alternative) {
+        return isEmpty() ? alternative : this;
+    }
+
+    public Option<A> OrElseGet(Supplier<? extends Option<A>> supplier) {
+        return isEmpty() ? supplier.get() : this;
     }
 
     public final <B> Option<B> map(Function<? super A, ? extends B> f) {

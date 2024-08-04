@@ -1,5 +1,7 @@
 package com.lk.jetl.execution;
 
+import com.lk.jetl.configuration.ReadonlyConfig;
+import com.lk.jetl.configuration.util.ConfigValidator;
 import com.lk.jetl.sql.DataFrame;
 import com.lk.jetl.sql.connector.TransformProvider;
 import com.lk.jetl.sql.factories.FactoryUtil;
@@ -30,13 +32,15 @@ public class TransformNode implements Node {
     @Override
     public DataFrame execute() {
         TransformFactory transformFactory = FactoryUtil.discoverTransformFactory(TransformFactory.class, type);
+        ReadonlyConfig optionsConfig = ReadonlyConfig.fromMap(options);
+        ConfigValidator.of(optionsConfig).validate(transformFactory.optionRule());
         StructType[] depSchemas = new StructType[dependencies.length];
         DataFrame[] depDfs = new DataFrame[dependencies.length];
         for (int i = 0; i < dependencies.length; i++) {
             depDfs[i] = dependencies[i].execute();
             depSchemas[i] = depDfs[i].getSchema();
         }
-        TransformProvider transformProvider = transformFactory.getTransformProvider(depSchemas, options);
+        TransformProvider transformProvider = transformFactory.getTransformProvider(depSchemas, optionsConfig);
         return transformProvider.transform(depDfs);
     }
 

@@ -1,7 +1,5 @@
 package com.lk.jetl;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lk.jetl.execution.*;
 import com.lk.jetl.sql.DataFrame;
@@ -15,8 +13,7 @@ public class Starter {
     public static void main(String[] args) throws Exception {
         Config config;
         if (args.length < 1) {
-            //throw new IllegalArgumentException("please input config file path");
-            config = ConfigFactory.load();
+            throw new IllegalArgumentException("please input config file path");
         }else{
             config = ConfigFactory.parseFile(new File(args[0]));
         }
@@ -26,6 +23,7 @@ public class Starter {
         for (int i = 0; i < nodes.length; i++) {
             //System.out.println(JSON.toJSONString(nodes[i], JSONWriter.Feature.PrettyFormat));
             System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(nodes[i]));
+            //System.out.println(nodes[i]);
         }
 
         DataFrame df = nodes[0].execute();

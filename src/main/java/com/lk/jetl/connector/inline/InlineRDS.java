@@ -82,13 +82,14 @@ public class InlineRDS<T> extends RDS<T> {
                     }
                 }else{
                     batchRows += 1;
-                    if(batchRows >= rowsPerSecondForSubtask){
-                        batchRows = 0;
+                    if(batchRows > rowsPerSecondForSubtask){
+                        //System.out.println(rows + ","+ batchRows);
+                        batchRows = 1;
                         nextReadTime += 1000;
                         waitMs = Math.max(0, nextReadTime - System.currentTimeMillis());
                         if(waitMs > 0) {
                             try {
-                                Thread.sleep(millisPerRow);
+                                Thread.sleep(waitMs);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }

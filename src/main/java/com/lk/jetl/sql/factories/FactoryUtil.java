@@ -1,15 +1,40 @@
 package com.lk.jetl.sql.factories;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.lk.jetl.configuration.Option;
+import com.lk.jetl.configuration.Options;
+import com.lk.jetl.configuration.ReadonlyConfig;
+import com.lk.jetl.configuration.util.ConfigValidator;
+import com.lk.jetl.format.DecodingFormat;
+import com.lk.jetl.format.EncodingFormat;
+import com.lk.jetl.sql.Row;
 import com.lk.jetl.util.ServiceLoaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class FactoryUtil {
     private static final Logger LOG = LoggerFactory.getLogger(FactoryUtil.class);
+
+    public static final Option<Map<String, Object>> FORMAT = Options.key("format")
+                    .type(new TypeReference<Map<String, Object>>() {})
+                    .defaultValue(Collections.EMPTY_MAP)
+                    .withDescription("Defines the format identifier for encoding data. "
+                                    + "The identifier is used to discover a suitable format factory.");
+    public static final Option<String> FORMAT_TYPE = Options.key("format.type")
+            .stringType()
+            .defaultValue("json")
+            .withDescription("format type");
+
+    public static final Option<Integer> PARALLELISM = Options.key("parallelism")
+            .intType()
+            .defaultValue(1)
+            .withDescription("parallelism");
 
     public static <T extends Factory> T discoverFactory(
             ClassLoader classLoader, Class<T> factoryClass, String factoryIdentifier) {
@@ -88,12 +113,36 @@ public class FactoryUtil {
     }
 
     public static <T extends TableFactory> T discoverTableFactory(
-            Class<T> factoryClass,  String connector) {
+            Class<T> factoryClass, String connector) {
         return discoverFactory(Thread.currentThread().getContextClassLoader(), factoryClass, connector);
     }
 
     public static <T extends TransformFactory> T discoverTransformFactory(
-            Class<T> factoryClass,  String connector) {
-        return discoverFactory(Thread.currentThread().getContextClassLoader(), factoryClass, connector);
+            Class<T> factoryClass, String type) {
+        return discoverFactory(Thread.currentThread().getContextClassLoader(), factoryClass, type);
+    }
+
+    public static <T extends DecodingFormatFactory> DecodingFormat<Row> discoverDecodingFormat(
+            Class<T> factoryClass, ReadonlyConfig options, String type) {
+        T formatFactory = discoverDecodingFormatFactory(factoryClass, type);
+        ConfigValidator.of(options).validate(formatFactory.optionRule());
+        return formatFactory.createDecodingFormat(options);
+    }
+
+    public static <T extends DecodingFormatFactory> T discoverDecodingFormatFactory(
+            Class<T> factoryClass, String type) {
+        return discoverFactory(Thread.currentThread().getContextClassLoader(), factoryClass, type);
+    }
+
+    public static <T extends EncodingFormatFactory> EncodingFormat<Row> discoverEncodingFormat(
+            Class<T> factoryClass, ReadonlyConfig options, String type) {
+        T formatFactory = discoverEncodingFormatFactory(factoryClass, type);
+        ConfigValidator.of(options).validate(formatFactory.optionRule());
+        return formatFactory.createEncodingFormat(options);
+    }
+
+    public static <T extends EncodingFormatFactory> T discoverEncodingFormatFactory(
+            Class<T> factoryClass, String type) {
+        return discoverFactory(Thread.currentThread().getContextClassLoader(), factoryClass, type);
     }
 }

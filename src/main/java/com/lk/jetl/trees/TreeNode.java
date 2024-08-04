@@ -72,7 +72,7 @@ public abstract class TreeNode<T> implements Serializable {
         for (int i = 0; i < args.length; i++) {
             arg = args[i];
             if (arg instanceof List) {
-                newArgs[i] = ((List) arg).stream().map(x -> mapChild(x, containsChild, remainingNewChildren));
+                newArgs[i] = ((List) arg).stream().map(x -> mapChild(x, containsChild, remainingNewChildren)).collect(Collectors.toList());
             } else if (arg instanceof TreeNode && containsChild.contains(arg)) {
                 newArgs[i] = remainingNewChildren.removeFirst();
             } else {

@@ -40,7 +40,9 @@ public class Cast extends UnaryExpression{
             // We won't call the returned function actually, but returns a placeholder.
             cast = x -> {throw new IllegalArgumentException("should not directly cast from NullType to" + to);};
         } else {
-            if(to instanceof LongType){
+            if(to instanceof IntegerType){
+                cast = castToInt(from);
+            }else if(to instanceof LongType){
                 cast = castToLong(from);
             }else if(to instanceof DoubleType){
                 cast = castToDouble(from);
@@ -53,6 +55,23 @@ public class Cast extends UnaryExpression{
     @Override
     protected Object nullSafeEval(Object input) {
         return cast.apply(input);
+    }
+
+    private Function<Object, Object> castToInt(DataType from){
+        if(from instanceof StringType){
+            return x -> {
+                try {
+                    return Integer.parseInt((String)x);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            };
+        }
+        else if(from instanceof NumericType){
+            return x -> ((Number)x).intValue();
+        }
+
+        throw new IllegalArgumentException();
     }
 
     private Function<Object, Object> castToLong(DataType from){
