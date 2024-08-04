@@ -3,6 +3,7 @@ package com.lk.jetl.rds;
 import com.lk.jetl.connector.inline.InlineRDS;
 import com.lk.jetl.connector.kafka.KafkaConsumerRDS;
 import com.lk.jetl.JEtlContext;
+import com.lk.jetl.serialization.SimpleBinarySchema;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,14 +49,14 @@ public class RDSTest{
     public void testKafkaConsumerRDS() throws Exception {
         Properties props = new Properties();
         props.put("bootstrap.servers", "192.168.44.12:9092");
-        props.put("enable.auto.commit", "false");
+        props.put("enable.auto.commit", "true");
         props.put("auto.offset.reset", "latest");
         props.put("kafka.session.timeout.ms", "60000");
         props.put("max.poll.records", "1000");
         props.put("group.id", "test");
-        RDS<String> rds = new KafkaConsumerRDS<byte[]>(1, "OBJECT-STATISTICS-METRIC", props)
+        RDS<String> rds = new KafkaConsumerRDS<byte[]>(1,"OBJECT-STATISTICS-METRIC", new SimpleBinarySchema(), props)
                 .map(x -> new String(x, StandardCharsets.UTF_8))
-                .filter(x -> x.contains("102"))
+                //.filter(x -> x.contains("102"))
                 ;
         RDS<String> rst = rds.sink(x -> LOG.warn(x));
         JEtlContext.runJob(rst);

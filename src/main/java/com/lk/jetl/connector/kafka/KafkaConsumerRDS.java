@@ -3,6 +3,7 @@ package com.lk.jetl.connector.kafka;
 import com.lk.jetl.rds.Partition;
 import com.lk.jetl.rds.RDS;
 import com.lk.jetl.rds.SimplePartition;
+import com.lk.jetl.serialization.DeserializationSchema;
 import com.lk.jetl.util.Iterator;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -15,11 +16,13 @@ import java.util.Properties;
 public class KafkaConsumerRDS<T> extends RDS<T> {
     final int parallelism;
     final String topic;
+    final DeserializationSchema<T> deserialization;
     final Properties props;
     transient KafkaConsumer<byte[], byte[]> consumer;
 
-    public KafkaConsumerRDS(int parallelism, String topic, Properties props) {
+    public KafkaConsumerRDS(int parallelism, String topic, DeserializationSchema<T> deserialization, Properties props) {
         this.parallelism = parallelism;
+        this.deserialization = deserialization;
         this.topic = topic;
         this.props = props;
     }
@@ -48,14 +51,14 @@ public class KafkaConsumerRDS<T> extends RDS<T> {
             @Override
             public T next() {
                 if (recordIter.hasNext()) {
-                    return (T) recordIter.next().value();
+                    return deserialization.deserialize(recordIter.next().value());
                 }
 
                 do {
                     recordIter = Iterator.fromJava(consumer.poll(Duration.ofMillis(250)).iterator());
                 } while (!recordIter.hasNext());
 
-                return (T) recordIter.next().value();
+                return deserialization.deserialize(recordIter.next().value());
             }
         };
     }

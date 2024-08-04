@@ -1,5 +1,6 @@
 com.lk.jetl.sql.connector.inline.InlineTableFactory
 com.lk.jetl.sql.connector.print.PrintTableFactory
+com.lk.jetl.sql.connector.kafka.KafkaTableFactory
 com.lk.jetl.sql.transform.query.QueryTransformFactory
 com.lk.jetl.sql.transform.filter.FilterTransformFactory
 com.lk.jetl.sql.formats.json.JsonFormatFactory
