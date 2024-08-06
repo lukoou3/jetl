@@ -1,18 +1,22 @@
 package com.lk.jetl.sql.analysis;
 
 
+import com.lk.jetl.sql.api.UDF;
 import com.lk.jetl.sql.expressions.*;
 import com.lk.jetl.sql.expressions.conditional.*;
 import com.lk.jetl.sql.expressions.nvl.*;
 import com.lk.jetl.sql.expressions.regexp.RegExpExtract;
 import com.lk.jetl.sql.expressions.regexp.StringSplit;
 import com.lk.jetl.sql.expressions.string.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class FunctionRegistryUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(FunctionRegistryUtils.class);
     static Map<String, FunctionBuilder> expressions = new HashMap<>();
 
     static {
@@ -43,6 +47,24 @@ public class FunctionRegistryUtils {
             throw new IllegalArgumentException("undefined function " + name);
         }
         return func.build(name, args);
+    }
+
+    public static void register(String name, UDF f){
+        FunctionBuilder builder =  (n, expressions) -> {
+            if(f.inputTypes().size() != expressions.size()){
+                throw  new IllegalArgumentException("Invalid number of arguments for function " + n + ". Expected: " + f.inputTypes().size() + "; Found: " + expressions.size());
+            }
+            return new UDFExpression(f, expressions);
+        };
+        registerFunction(name, builder);
+    }
+
+    private static void registerFunction(String name, FunctionBuilder builder){
+        String normalizedName = name.toLowerCase();
+        FunctionBuilder previous = expressions.put(normalizedName, builder);
+        if (previous != null) {
+            LOG.warn("The function {} replaced a previously registered function.", normalizedName);
+        }
     }
 
     private static FunctionBuilder expression(Class<? extends Expression> clazz) {
