@@ -99,7 +99,11 @@ public class TypeCoercion {
         return Option.empty();
     }
 
-    static Expression castIfNotSameType(Expression expr, DataType dt) {
+    public static Expression cast(Expression expr, DataType dt) {
+        return castIfNotSameType(expr, dt);
+    }
+
+    public static Expression castIfNotSameType(Expression expr, DataType dt) {
         if (!expr.getDataType().sameType(dt)) {
             return new Cast(expr, dt);
         } else {

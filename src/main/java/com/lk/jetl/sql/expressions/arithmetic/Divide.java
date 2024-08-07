@@ -28,7 +28,7 @@ public class Divide extends BinaryArithmetic {
         super.open();
         DataType dataType = getDataType();
         if (dataType instanceof DoubleType) {
-            div = (x, y) -> (Double) x * (Double) y;
+            div = (x, y) -> (Double) x / (Double) y;
         } else {
             throw new RuntimeException();
         }
